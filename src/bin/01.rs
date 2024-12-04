@@ -37,12 +37,12 @@ pub fn part_two(input: &str) -> Option<u32> {
         .map(|pair| pair.split("   ").collect::<Vec<&str>>())
         .collect()
         ;
-    let mut left_list: Vec<u32> = nested_list
+    let left_list: Vec<u32> = nested_list
         .iter()
         .map(|l| l[0].parse::<u32>().unwrap())
         .collect()
         ;
-    let mut right_list: Vec<u32> = nested_list
+    let right_list: Vec<u32> = nested_list
         .iter()
         .map(|l| l[1].parse::<u32>().unwrap())
         .collect()
