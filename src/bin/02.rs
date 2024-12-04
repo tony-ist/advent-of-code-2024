@@ -53,7 +53,21 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    let nested_list: Vec<Vec<u32>> = input
+        .split('\n')
+        .map(|line| line
+            .split(' ')
+            .map(|x| x.parse::<u32>().unwrap())
+            .collect())
+        .collect()
+        ;
+
+    let result = nested_list.iter().map(|x| match is_safe(x) {
+        true => 1,
+        false => 0,
+    }).sum();
+
+    return Some(result);
 }
 
 #[cfg(test)]
@@ -69,6 +83,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(4));
     }
 }
