@@ -34,6 +34,18 @@ fn is_safe_delta(delta: i32) -> bool {
     return 1 <= delta && delta <= 3;
 }
 
+fn is_tolerable(input: &Vec<u32>) -> bool {
+    for i in 0..input.len() {
+        let mut sublist = input.clone();
+        sublist.remove(i);
+        if is_safe(&sublist) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 pub fn part_one(input: &str) -> Option<u32> {
     let nested_list: Vec<Vec<u32>> = input
         .split('\n')
@@ -62,7 +74,7 @@ pub fn part_two(input: &str) -> Option<u32> {
         .collect()
         ;
 
-    let result = nested_list.iter().map(|x| match is_safe(x) {
+    let result = nested_list.iter().map(|x| match is_tolerable(x) {
         true => 1,
         false => 0,
     }).sum();
