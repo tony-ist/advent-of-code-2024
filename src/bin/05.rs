@@ -37,17 +37,21 @@ fn middle(x: &Vec<u32>) -> u32 {
 }
 
 fn is_ordered_correctly(update: &Vec<u32>, rules: &Vec<Vec<u32>>) -> bool {
-    return get_violated_indices(update, rules).is_none();
+    return get_violated_indices_and_rule_index(update, rules).is_none();
 }
 
-fn adheres_to_rules(lhs: u32, rhs: u32, rules: &Vec<Vec<u32>>) -> bool {
-    for rule in rules {
+fn does_adhere_to_rules(lhs: u32, rhs: u32, rules: &Vec<Vec<u32>>) -> bool {
+    return get_violated_rule_index(lhs, rhs, rules).is_none();
+}
+
+fn get_violated_rule_index(lhs: u32, rhs: u32, rules: &Vec<Vec<u32>>) -> Option<usize> {
+    for (i, rule) in rules.iter().enumerate() {
         if rule[0] == rhs && rule[1] == lhs {
-            return false;
+            return Some(i);
         }
     }
     
-    return true;
+    return None;
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
@@ -69,15 +73,11 @@ pub fn part_two(input: &str) -> Option<u32> {
             .collect())
         .collect();
 
-    dbg!(&updates);
     let mut result = 0;
+    let max_steps = 100000;
 
     for update in updates {
-        dbg!(&update);
-        
-        let maybe_middle = get_middle_of_fixed_update(&update, &rules);
-        
-        dbg!(&maybe_middle);
+        let maybe_middle = get_middle_of_fixed_update(&update, &rules, max_steps);
         
         if let Some(middle) = maybe_middle {
             result += middle;
@@ -89,38 +89,39 @@ pub fn part_two(input: &str) -> Option<u32> {
 
 /// Returns `None` if update is correct, otherwise fixes it by reordering 
 /// and returns `Some` with middle element.
-/// Panics if cannot fix the update.
-fn get_middle_of_fixed_update(update: &Vec<u32>, rules: &Vec<Vec<u32>>) -> Option<u32> {
+/// Panics if cannot fix the update in `max_steps` steps.
+fn get_middle_of_fixed_update(update: &Vec<u32>, rules: &Vec<Vec<u32>>, max_steps: u32) -> Option<u32> {
     if is_ordered_correctly(update, rules) {
         return None;
     }
     
     let mut update_clone = update.clone();
+
+    let (mut a, mut b, rule_index) = get_violated_indices_and_rule_index(&update_clone, rules).unwrap();
+    let mut step = 0;
     
-    for i in 0..(update_clone.len() - 1) {
-        for j in (i + 1)..update_clone.len() {
-            update_clone.swap(i, j);
-            
-            if (i == 1 && j == 4) {
-                println!("{:?}", update_clone);
-            }
-            
-            if is_ordered_correctly(&update_clone, rules) {
-                return Some(middle(&update_clone));
-            } 
-            
-            update_clone.swap(i, j);
+    while step < max_steps {
+        update_clone.swap(a, b);
+        
+        if let Some((a2, b2, rule_index2)) = get_violated_indices_and_rule_index(&update_clone, rules) {
+            a = a2;
+            b = b2;
+        } else {
+            return Some(middle(&update_clone));
         }
+        
+        step += 1;
     }
     
-    panic!("Correct modification of update was not found")
+    panic!("Correct modification of update was not found in {} steps", max_steps);
 }
 
-fn get_violated_indices(update: &Vec<u32>, rules: &Vec<Vec<u32>>) -> Option<(usize, usize)> {
+fn get_violated_indices_and_rule_index(update: &Vec<u32>, rules: &Vec<Vec<u32>>) -> Option<(usize, usize, usize)> {
     for i in 0..(update.len() - 1) {
         for j in (i + 1)..update.len() {
-            if !adheres_to_rules(update[i], update[j], rules) {
-                return Some((i, j));
+            let maybe_violated_rule_index = get_violated_rule_index(update[i], update[j], rules);
+            if let Some(violated_rule_index) = maybe_violated_rule_index {
+                return Some((i, j, violated_rule_index));
             }
         }
     }
@@ -170,8 +171,9 @@ mod tests {
             vec![53, 13],
         ];
         
+        let max_steps = 10000;
         let update = vec![97,13,75,29,47];
-        let actual = get_middle_of_fixed_update(&update, &rules);
+        let actual = get_middle_of_fixed_update(&update, &rules, max_steps);
         
         assert_eq!(actual, Some(47));
     }
