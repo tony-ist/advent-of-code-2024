@@ -1,9 +1,9 @@
-use advent_of_code::{Addressable, Arithmetical, Bounded, Coord, Crossword, Vector};
+use advent_of_code::{Addressable, Bounded, Coord, Board, Vector};
 
 advent_of_code::solution!(4);
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let crossword: Crossword = crossword_from_str(&input);
+    let crossword: Board = crossword_from_str(&input);
     let mut count = 0;
 
     for i in 0..crossword.height() {
@@ -15,7 +15,7 @@ pub fn part_one(input: &str) -> Option<u32> {
     return Some(count);
 }
 
-fn count_xmas(crossword: &Crossword, coord: &Coord) -> u32 {
+fn count_xmas(crossword: &Board, coord: &Coord) -> u32 {
     let directions = [
       Vector { x: -1, y: -1 },  
       Vector { x: -1, y: 0 },  
@@ -35,7 +35,7 @@ fn count_xmas(crossword: &Crossword, coord: &Coord) -> u32 {
     return result;
 }
 
-fn check_direction(crossword: &Crossword, coord: &Coord, direction: &Vector) -> bool {
+fn check_direction(crossword: &Board, coord: &Coord, direction: &Vector) -> bool {
     if crossword.at(coord) != Some('X') {
         return false;
     }
@@ -59,7 +59,7 @@ fn check_direction(crossword: &Crossword, coord: &Coord, direction: &Vector) -> 
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let crossword: Crossword = crossword_from_str(&input);
+    let crossword: Board = crossword_from_str(&input);
     let mut count = 0;
 
     for i in 0..crossword.height() {
@@ -73,7 +73,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     return Some(count);
 }
 
-fn has_cross_mas(crossword: &Crossword, coord: &Coord) -> bool {
+fn has_cross_mas(crossword: &Board, coord: &Coord) -> bool {
     if crossword.at(&coord) != Some('A') {
         return false;
     }
@@ -95,11 +95,11 @@ fn is_m_and_s(char1: Option<char>, char2: Option<char>) -> bool {
     return char1 == Some('M') && char2 == Some('S') || char1 == Some('S') && char2 == Some('M');
 }
 
-fn crossword_from_str(input: &str) -> Crossword {
-    return input
+fn crossword_from_str(input: &str) -> Board {
+    return Board::new(input
         .split('\n')
         .map(|line| line.chars().collect::<Vec<char>>())
-        .collect();
+        .collect());
 }
 
 #[cfg(test)]

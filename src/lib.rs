@@ -1,19 +1,27 @@
 pub mod template;
 
+#[derive(PartialEq, Clone, Eq, Hash)]
 pub struct Coord {
     pub x: i32,
     pub y: i32,
 }
 
+#[derive(PartialEq, Clone, Eq, Hash)]
 pub struct Vector {
     pub x: i32,
     pub y: i32,
 }
 
-pub type Crossword = Vec<Vec<char>>;
+/// Assuming zero coordinate of the board is at top left corner
+#[derive(PartialEq, Clone)]
+pub struct Board {
+    pub cells: Vec<Vec<char>>,
+}
 
 pub trait Addressable {
     fn at(&self, coord: &Coord) -> Option<char>;
+    
+    fn mutate(&mut self, coord: &Coord, value: char);
 }
 
 pub trait Bounded {
@@ -22,27 +30,43 @@ pub trait Bounded {
     fn is_in_bounds(&self, coord: &Coord) -> bool;
 }
 
-impl Addressable for Crossword {
+pub trait Searchable {
+    fn find(&self, char: char) -> Option<Coord>;
+    
+    fn count(&self, char: char) -> u32;
+}
+
+impl Board {
+    pub fn new(cells: Vec<Vec<char>>) -> Board {
+        return Board { cells };
+    }
+}
+
+impl Addressable for Board {
     fn at(&self, coord: &Coord) -> Option<char> {
         if self.is_in_bounds(coord) {
-            return Some(self[coord.x as usize][coord.y as usize]);
+            return Some(self.cells[coord.x as usize][coord.y as usize]);
         };
         
         return None;
     }
+
+    fn mutate(&mut self, coord: &Coord, value: char) {
+        self.cells[coord.x as usize][coord.y as usize] = value;
+    }
 }
 
-impl Bounded for Crossword {
+impl Bounded for Board {
     fn width(&self) -> usize {
-        if self.len() == 0 {
+        if self.cells.len() == 0 {
             return 0;
         }
         
-        return self[0].len();
+        return self.cells[0].len();
     }
 
     fn height(&self) -> usize {
-        return self.len();
+        return self.cells.len();
     }
     
     fn is_in_bounds(&self, coord: &Coord) -> bool {
@@ -53,12 +77,78 @@ impl Bounded for Crossword {
     }
 }
 
-pub trait Arithmetical {
-    fn add(&self, vector: &Vector) -> Coord;
+impl Searchable for Board {
+    fn find(&self, char: char) -> Option<Coord> {
+        for i in 0..self.height() {
+            for j in 0..self.width() {
+                if self.cells[i][j] == char {
+                    return Some(Coord::new(i as i32, j as i32));
+                }
+            }
+        }
+
+        return None;
+    }
+
+    fn count(&self, char: char) -> u32 {
+        let mut result = 0;
+        for i in 0..self.height() {
+            for j in 0..self.width() {
+                if self.cells[i][j] == char {
+                    result += 1;
+                }
+            }
+        }
+        return result;
+    }
 }
 
-impl Arithmetical for Coord {
-    fn add(&self, vector: &Vector) -> Coord {
+impl Coord {
+    pub fn new(x: i32, y: i32) -> Coord {
+        return Coord { x, y };
+    }
+
+    pub fn add(&self, vector: &Vector) -> Coord {
         return Coord { x: self.x + vector.x, y: self.y + vector.y };
     }
+}
+
+impl std::fmt::Display for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row in &self.cells {
+            for cell in row {
+                write!(f, "{}", cell)?;
+            }
+            writeln!(f)?;
+        }
+        
+        return Ok(());
+    }
+}
+
+impl Vector {
+    pub const UP: Vector = Vector { x: -1, y: 0 };
+    pub const DOWN: Vector = Vector { x: 1, y: 0 };
+    pub const LEFT: Vector = Vector { x: 0, y: -1 };
+    pub const RIGHT: Vector = Vector { x: 0, y: 1 };
+    
+    pub fn new(x: i32, y: i32) -> Vector {
+        return Vector { x, y };
+    }
+
+    pub fn rotate_right(&self) -> Vector {
+        match self {
+            &Vector::UP => Vector::RIGHT,
+            &Vector::RIGHT => Vector::DOWN,
+            &Vector::DOWN => Vector::LEFT,
+            &Vector::LEFT => Vector::UP,
+            _ => panic!("Rotating unsupported vector"),
+        }
+    }
+}
+
+pub enum LabyrinthCell {
+    Wall,
+    Empty,
+    Guard,
 }
