@@ -1,37 +1,25 @@
+use itertools::Itertools;
+
 advent_of_code::solution!(7);
 
 pub fn part_one(input: &str) -> Option<u64> {
-    let results: Vec<u64> = input
-        .lines()
-        .map(|line| line.split(':').nth(0).unwrap().parse::<u64>().unwrap())
-        .collect();
-    let operands_list: Vec<Vec<u32>> = input
-        .lines()
-        .map(|line| {
-            line.split(':')
-                .nth(1)
-                .unwrap()
-                .split(' ')
-                .filter(|str| !str.is_empty())
-                .map(|num_str| num_str.parse::<u32>().unwrap())
-                .collect()
-        })
-        .collect();
+    let (results, operands_list) = extract_results_and_operands(input);
 
     let mut answer = 0;
     
     for (i, operands) in operands_list.iter().enumerate() {
-        if is_solvable(results[i], operands) {
+        if is_solvable_2_op(results[i], operands) {
             answer += results[i];
         }
     }
-    
+
     return Some(answer);
 }
 
 enum Operator {
     Add,
     Multiply,
+    Concat,
 }
 
 struct BinStack {
@@ -53,7 +41,7 @@ impl BinStack {
     }
 }
 
-fn is_solvable(result: u64, operands: &Vec<u32>) -> bool {
+fn is_solvable_2_op(result: u64, operands: &Vec<u32>) -> bool {
     let operators_len = operands.len() - 1;
     let mut op_order: u32 = 0;
     
@@ -84,14 +72,72 @@ fn calculate(operands: &Vec<u32>, op_order: u32) -> u64 {
             Operator::Multiply => {
                 accumulator *= operands[i] as u64;
             },
+            Operator::Concat => {
+                accumulator = accumulator * 10 + operands[i] as u64; // todo fix
+            },
         };
     }
     
     return accumulator;
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    let (results, operands_list) = extract_results_and_operands(input);
+
+    let mut answer = 0;
+
+    for (i, operands) in operands_list.iter().enumerate() {
+        if is_solvable_3_op(results[i], operands) {
+            answer += results[i];
+        }
+    }
+
+    return Some(answer);
+}
+
+fn extract_results_and_operands(input: &str) -> (Vec<u64>, Vec<Vec<u32>>) {
+    let results: Vec<u64> = input
+        .lines()
+        .map(|line| line.split(':').nth(0).unwrap().parse::<u64>().unwrap())
+        .collect();
+    let operands_list: Vec<Vec<u32>> = input
+        .lines()
+        .map(|line| {
+            line.split(':')
+                .nth(1)
+                .unwrap()
+                .split(' ')
+                .filter(|str| !str.is_empty())
+                .map(|num_str| num_str.parse::<u32>().unwrap())
+                .collect()
+        })
+        .collect();
+    (results, operands_list)
+}
+
+fn is_solvable_3_op(result: u64, operands: &Vec<u32>) -> bool {
+    let operators_len = operands.len() - 1;
+    let mut op_order: u32 = 0;
+
+    [
+        Operator::Add,
+        Operator::Multiply,
+        Operator::Concat
+    ].iter().permutations(operators_len).for_each(|permutation| {
+        
+    });
+
+    for _ in 0..2u32.pow(operators_len as u32) {
+        let calculated = calculate(operands, op_order);
+
+        if calculated == result {
+            return true;
+        }
+
+        op_order += 1;
+    }
+
+    return false;
 }
 
 #[cfg(test)]
