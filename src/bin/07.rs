@@ -1,4 +1,6 @@
-use itertools::Itertools;
+use itertools::{Itertools, MultiProduct};
+use std::slice::Iter;
+use advent_of_code::num_digits;
 
 advent_of_code::solution!(7);
 
@@ -16,11 +18,18 @@ pub fn part_one(input: &str) -> Option<u64> {
     return Some(answer);
 }
 
+#[derive(Debug, PartialEq)]
 enum Operator {
     Add,
     Multiply,
     Concat,
 }
+
+const ALL_OPERATORS: [Operator; 3] = [
+    Operator::Add,
+    Operator::Multiply,
+    Operator::Concat,
+];
 
 struct BinStack {
     stack: u32,
@@ -46,7 +55,7 @@ fn is_solvable_2_op(result: u64, operands: &Vec<u32>) -> bool {
     let mut op_order: u32 = 0;
     
     for _ in 0..2u32.pow(operators_len as u32) {
-        let calculated = calculate(operands, op_order);
+        let calculated = calculate_2_op(operands, op_order);
         
         if calculated == result {
             return true;
@@ -58,7 +67,7 @@ fn is_solvable_2_op(result: u64, operands: &Vec<u32>) -> bool {
     return false;
 }
 
-fn calculate(operands: &Vec<u32>, op_order: u32) -> u64 {
+fn calculate_2_op(operands: &Vec<u32>, op_order: u32) -> u64 {
     let mut stack = BinStack::new(op_order);
     let mut accumulator: u64 = operands[0] as u64;
 
@@ -73,7 +82,7 @@ fn calculate(operands: &Vec<u32>, op_order: u32) -> u64 {
                 accumulator *= operands[i] as u64;
             },
             Operator::Concat => {
-                accumulator = accumulator * 10 + operands[i] as u64; // todo fix
+                panic!("Concat operator is not supported in this function")
             },
         };
     }
@@ -117,27 +126,47 @@ fn extract_results_and_operands(input: &str) -> (Vec<u64>, Vec<Vec<u32>>) {
 
 fn is_solvable_3_op(result: u64, operands: &Vec<u32>) -> bool {
     let operators_len = operands.len() - 1;
-    let mut op_order: u32 = 0;
-
-    [
-        Operator::Add,
-        Operator::Multiply,
-        Operator::Concat
-    ].iter().permutations(operators_len).for_each(|permutation| {
+    let cartesian_product = all_operator_permutations(operators_len);
+    
+    for permutation in cartesian_product {
+        let calculated = calculate_3_op(operands, &permutation);
         
-    });
-
-    for _ in 0..2u32.pow(operators_len as u32) {
-        let calculated = calculate(operands, op_order);
-
         if calculated == result {
             return true;
         }
+    }
+    
+    return false;
+}
 
-        op_order += 1;
+fn all_operator_permutations<'a>(len: usize) -> MultiProduct<Iter<'a, Operator>> {
+    return (0..len).map(|_| ALL_OPERATORS.iter()).multi_cartesian_product();
+}
+
+fn calculate_3_op(operands: &Vec<u32>, permutation: &Vec<&Operator>) -> u64 {
+    let mut accumulator: u64 = operands[0] as u64;
+
+    for i in 1..operands.len() {
+        let operator = permutation[i - 1];
+        
+        match operator {
+            Operator::Add => {
+                accumulator += operands[i] as u64;
+            },
+            Operator::Multiply => {
+                accumulator *= operands[i] as u64;
+            },
+            Operator::Concat => {
+                accumulator = concat_u64(accumulator, operands[i] as u64);
+            },
+        };
     }
 
-    return false;
+    return accumulator;
+}
+
+fn concat_u64(a: u64, b: u64) -> u64 {
+    return a * 10u64.pow(num_digits(b)) + b;
 }
 
 #[cfg(test)]
@@ -159,21 +188,54 @@ mod tests {
     #[test]
     fn test_calculate_simple() {
         let operands = vec![1, 2, 3, 4, 5];
-        let result = calculate(&operands, 0b1010);
+        let result = calculate_2_op(&operands, 0b1010);
         assert_eq!(result, 65);
     }
 
     #[test]
     fn test_calculate_input_0b10() {
         let operands = vec![81, 40, 27];
-        let result = calculate(&operands, 0b10);
+        let result = calculate_2_op(&operands, 0b10);
         assert_eq!(result, 3267);
     }
 
     #[test]
     fn test_calculate_input_0b01() {
         let operands = vec![81, 40, 27];
-        let result = calculate(&operands, 0b01);
+        let result = calculate_2_op(&operands, 0b01);
         assert_eq!(result, 3267);
+    }
+
+    #[test]
+    fn test_concat() {
+        assert_eq!(concat_u64(123, 456), 123456);
+    }
+    
+    #[test]
+    fn test_num_digits() {
+        assert_eq!(num_digits(0), 0);
+        assert_eq!(num_digits(5), 1);
+        assert_eq!(num_digits(10), 2);
+        assert_eq!(num_digits(55), 2);
+        assert_eq!(num_digits(99), 2);
+        assert_eq!(num_digits(100), 3);
+        assert_eq!(num_digits(555), 3);
+        assert_eq!(num_digits(999), 3);
+    }
+
+    #[test]
+    fn test_all_op_permutations() {
+        let mut actual = all_operator_permutations(2);
+        assert_eq!(actual.next(), Some(vec![&Operator::Add, &Operator::Add]));
+        assert_eq!(actual.next(), Some(vec![&Operator::Add, &Operator::Multiply]));
+        assert_eq!(actual.next(), Some(vec![&Operator::Add, &Operator::Concat]));
+        assert_eq!(actual.next(), Some(vec![&Operator::Multiply, &Operator::Add]));
+        assert_eq!(actual.next(), Some(vec![&Operator::Multiply, &Operator::Multiply]));
+        assert_eq!(actual.next(), Some(vec![&Operator::Multiply, &Operator::Concat]));
+        assert_eq!(actual.next(), Some(vec![&Operator::Concat, &Operator::Add]));
+        assert_eq!(actual.next(), Some(vec![&Operator::Concat, &Operator::Multiply]));
+        assert_eq!(actual.next(), Some(vec![&Operator::Concat, &Operator::Concat]));
+
+        assert_eq!(actual.next(), None);
     }
 }

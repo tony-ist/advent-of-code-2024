@@ -5,7 +5,7 @@ advent_of_code::solution!(4);
 pub fn part_one(input: &str) -> Option<u32> {
     let crossword: Board = crossword_from_str(&input);
     let mut count = 0;
-
+    
     for i in 0..crossword.height() {
         for j in 0..crossword.width() {
             count += count_xmas(&crossword, &Coord{ x: i as i32, y: j as i32 });
@@ -64,7 +64,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     for i in 0..crossword.height() {
         for j in 0..crossword.width() {
-            if (has_cross_mas(&crossword, &Coord{ x: i as i32, y: j as i32 })) {
+            if has_cross_mas(&crossword, &Coord{ x: i as i32, y: j as i32 }) {
                 count += 1;
             }
         }

@@ -147,8 +147,12 @@ impl Vector {
     }
 }
 
-pub enum LabyrinthCell {
-    Wall,
-    Empty,
-    Guard,
+pub fn num_digits(x: u64) -> u32 {
+    let mut i = 0;
+    let mut x = x;
+    while x > 0 {
+        x /= 10;
+        i += 1;
+    }
+    return i;
 }
