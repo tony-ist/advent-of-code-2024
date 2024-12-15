@@ -1,38 +1,49 @@
+use std::collections::HashMap;
 use advent_of_code::num_digits;
 
 advent_of_code::solution!(11);
+
+type Memo = HashMap<(u64, u64), u64>;
+
+fn memoize(memo: &mut Memo, stone: u64, times: u64, result: u64) {
+    memo.insert((stone, times), result);
+}
+
+fn read_memo(memo: &Memo, stone: u64, times: u64) -> Option<&u64> {
+    return memo.get(&(stone, times));
+} 
 
 pub fn part_one(input: &str) -> Option<u64> {
     let stones: Vec<u64> = input.split(' ').map(|stone_str| stone_str.parse().unwrap()).collect();
     return Some(blink(&stones, 25));
 }
 
-fn blink_recursively(stone: u64, times: u64) -> u64 {
+fn blink_recursively(stone: u64, times: u64, memo: &mut Memo) -> u64 {
     if times == 0 {
         return 1;
     }
 
-    return blink_recursively(stone, times - 1) + blink_recursively(stone, times - 1);
-
-    if stone == 0 {
-        return vec![1];
+    if let Some(memo_result) = read_memo(memo, stone, times) {
+        return *memo_result;
     }
-
-    return match is_num_digits_even(stone) {
-        true => split(stone),
-        false => vec![stone * 2024],
-    }
+    
+    let blink_result = blink_once(stone);
+    
+    let answer = match blink_result.len() {
+        1 => blink_recursively(blink_result[0], times - 1, memo),
+        2 => blink_recursively(blink_result[0], times - 1, memo) 
+            + blink_recursively(blink_result[1], times - 1, memo),
+        _ => panic!("Blink result has length {}", blink_result.len()),
+    };
+    
+    memoize(memo, stone, times, answer);
+    
+    return answer;
 }
 
 fn blink(stones: &Vec<u64>, times: u64) -> u64 {
-    let mut stones = stones.clone();
-    for i in 0..times {
-        println!("Iterated {} times. Stones len is {}", i+1, stones.len());
-        stones = stones.iter().map(|stone| blink_once(*stone)).flatten().collect();
-        // print_u64_slice(&stones[..min(stones.len(), 15)]);
-        // print_u64_slice(&stones);
-    }
-    return stones.len() as u64;
+    let mut memo = Memo::new();
+    return stones.iter().map(|stone| blink_recursively(*stone, times, &mut memo)).sum();
 }
 
 fn print_u64_slice(vec: &[u64]) {
@@ -81,6 +92,11 @@ mod tests {
     #[test]
     fn test_blink_1() {
         test_blink(&vec![0, 2, 12], 1, 4);
+    }
+
+    #[test]
+    fn test_blink_2() {
+        test_blink(&vec![0, 2, 12], 2, 5);
     }
 
     #[test]
