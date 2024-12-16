@@ -1,12 +1,12 @@
 pub mod template;
 
-#[derive(PartialEq, Clone, Eq, Hash)]
+#[derive(PartialEq, Clone, Eq, Hash, Debug)]
 pub struct Coord {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(PartialEq, Clone, Eq, Hash)]
+#[derive(PartialEq, Clone, Eq, Hash, Debug)]
 pub struct Vector {
     pub x: i32,
     pub y: i32,
@@ -39,6 +39,10 @@ pub trait Searchable {
 impl Board {
     pub fn new(cells: Vec<Vec<char>>) -> Board {
         return Board { cells };
+    }
+    
+    pub fn from(input: &str) -> Board {
+        return Board::new(input.lines().map(|line| line.chars().collect()).collect());
     }
 }
 
