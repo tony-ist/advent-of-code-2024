@@ -3,11 +3,11 @@ use std::fmt::{Display, Formatter, Write};
 
 advent_of_code::solution!(9);
 
-struct SingleDigitCounter(u8);
+struct CyclicCounter(u8);
 
-impl SingleDigitCounter {
-    fn new() -> SingleDigitCounter {
-        return SingleDigitCounter(0);
+impl CyclicCounter {
+    fn new() -> CyclicCounter {
+        return CyclicCounter(0);
     }
     
     fn next(&mut self) -> u8 {
@@ -25,25 +25,25 @@ impl SingleDigitCounter {
     }
 }
 
-struct Drive(Vec<Option<u8>>);
+struct Drive(Vec<Option<u32>>);
 
 impl Drive {
     fn from(disk_map: &Vec<u8>) -> Drive {
         let drive_len = disk_map.iter().fold(0, |acc, &x| acc + x as u32);
         let mut drive = Drive(Vec::with_capacity(drive_len as usize));
         let mut is_inserting_files = true;
-        let mut counter = SingleDigitCounter::new();
+        let mut counter: u32 = 0;
 
         for &x in disk_map {
             for _ in 0..x {
                 if is_inserting_files {
-                    drive.0.push(Some(counter.value()));
+                    drive.0.push(Some(counter));
                 } else {
                     drive.0.push(None);
                 }
             }
             if is_inserting_files {
-                counter.next();
+                counter += 1;
             }
             is_inserting_files = !is_inserting_files;
         }
@@ -143,6 +143,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(2858));
     }
 }
