@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use advent_of_code::{Board, Bounded, Coord, Addressable, Vector};
+use advent_of_code::{Board, Bounded, Coord, Vector};
 
 advent_of_code::solution!(8);
 

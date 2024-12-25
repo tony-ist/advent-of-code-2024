@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use advent_of_code::{Addressable, Board, Bounded, Coord, Searchable, Vector};
+use advent_of_code::{Board, Bounded, Coord, Searchable, Vector};
 
 advent_of_code::solution!(6);
 
@@ -8,7 +8,7 @@ pub fn part_one(input: &str) -> Option<u32> {
     let initial_coord = board.find('^').unwrap();
     
     board.mutate(&initial_coord, '.');
-    trace_board(&mut board, &initial_coord, &Vector::UP);
+    trace_board(&mut board, &initial_coord, &Vector::NORTH);
     
     println!("{}", &board);
     
@@ -43,7 +43,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     let initial_coord = empty_board.find('^').unwrap();
     empty_board.mutate(&initial_coord, '.');
     
-    let mut direction = Vector::UP;
+    let mut direction = Vector::NORTH;
     let mut result = 0;
     let mut traced_board = empty_board.clone();
     
@@ -59,7 +59,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 
             mutated_board.mutate(&Coord::new(i as i32, j as i32), '#');
             
-            if has_loop(&mutated_board, &initial_coord, &Vector::UP) {
+            if has_loop(&mutated_board, &initial_coord, &Vector::NORTH) {
                 result += 1;
             }
         }
@@ -124,7 +124,7 @@ mod tests {
     #[test]
     fn test_has_loop_1_1() {
         let board = Board::new(vec![vec!['^']]);
-        let actual = has_loop(&board, &Coord::new(0, 0), &Vector::UP);
+        let actual = has_loop(&board, &Coord::new(0, 0), &Vector::NORTH);
         assert_eq!(actual, false);
     }
 
@@ -135,7 +135,7 @@ mod tests {
             vec!['#','^','#'],
             vec!['.','#','.'],
         ]);
-        let actual = has_loop(&board, &Coord::new(1, 1), &Vector::UP);
+        let actual = has_loop(&board, &Coord::new(1, 1), &Vector::NORTH);
         assert_eq!(actual, true);
     }
 }

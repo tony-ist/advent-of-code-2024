@@ -18,12 +18,6 @@ pub struct Board {
     pub cells: Vec<Vec<char>>,
 }
 
-pub trait Addressable {
-    fn at(&self, coord: &Coord) -> Option<char>;
-    
-    fn mutate(&mut self, coord: &Coord, value: char);
-}
-
 pub trait Bounded {
     fn width(&self) -> usize;
     fn height(&self) -> usize;
@@ -44,18 +38,16 @@ impl Board {
     pub fn from(input: &str) -> Board {
         return Board::new(input.lines().map(|line| line.chars().collect()).collect());
     }
-}
 
-impl Addressable for Board {
-    fn at(&self, coord: &Coord) -> Option<char> {
+    pub fn at(&self, coord: &Coord) -> Option<char> {
         if self.is_in_bounds(coord) {
             return Some(self.cells[coord.x as usize][coord.y as usize]);
         };
-        
+
         return None;
     }
 
-    fn mutate(&mut self, coord: &Coord, value: char) {
+    pub fn mutate(&mut self, coord: &Coord, value: char) {
         self.cells[coord.x as usize][coord.y as usize] = value;
     }
 }
@@ -131,10 +123,10 @@ impl std::fmt::Display for Board {
 }
 
 impl Vector {
-    pub const UP: Vector = Vector { x: -1, y: 0 };
-    pub const DOWN: Vector = Vector { x: 1, y: 0 };
-    pub const LEFT: Vector = Vector { x: 0, y: -1 };
-    pub const RIGHT: Vector = Vector { x: 0, y: 1 };
+    pub const NORTH: Vector = Vector { x: -1, y: 0 };
+    pub const SOUTH: Vector = Vector { x: 1, y: 0 };
+    pub const WEST: Vector = Vector { x: 0, y: -1 };
+    pub const EAST: Vector = Vector { x: 0, y: 1 };
     
     pub fn new(x: i32, y: i32) -> Vector {
         return Vector { x, y };
@@ -142,10 +134,10 @@ impl Vector {
 
     pub fn rotate_right(&self) -> Vector {
         match self {
-            &Vector::UP => Vector::RIGHT,
-            &Vector::RIGHT => Vector::DOWN,
-            &Vector::DOWN => Vector::LEFT,
-            &Vector::LEFT => Vector::UP,
+            &Vector::NORTH => Vector::EAST,
+            &Vector::EAST => Vector::SOUTH,
+            &Vector::SOUTH => Vector::WEST,
+            &Vector::WEST => Vector::NORTH,
             _ => panic!("Rotating unsupported vector"),
         }
     }

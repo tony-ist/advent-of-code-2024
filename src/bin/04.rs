@@ -1,4 +1,4 @@
-use advent_of_code::{Addressable, Bounded, Coord, Board, Vector};
+use advent_of_code::{Bounded, Coord, Board, Vector};
 
 advent_of_code::solution!(4);
 
