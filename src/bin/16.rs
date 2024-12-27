@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use advent_of_code::{Board, Bounded, Coord, Searchable, Vector};
 
 advent_of_code::solution!(16);
@@ -5,7 +6,7 @@ advent_of_code::solution!(16);
 const STEP_WEIGHT: u32 = 1;
 const TURN_WEIGHT: u32 = 1000;
 
-pub struct WeightedGraph {
+struct WeightedGraph {
     nodes_amount: usize,
     /// Node with id i has always index i in this vector
     nodes: Vec<Option<Node>>,
@@ -61,8 +62,42 @@ impl WeightedGraph {
         return None;
     }
 
-    pub fn shortest_path_cost(&self, start_node_id: usize, end_node_id: usize) -> Option<u32> {
+    pub fn shortest_path_cost(&self, start_node_id: usize, end_node_id: usize) -> Distance {
+        let mut distances: Vec<Distance> = Vec::with_capacity(self.nodes_amount);
+        let mut node_set: HashSet<usize> = HashSet::new();
+        for i in 0..self.nodes_amount {
+            distances.push(Distance::new(None));
+            node_set.insert(i);
+        }
+        distances[start_node_id] = Distance::new(Some(0));
+
+        while !node_set.is_empty() {
+            let node_id = pop_node_with_min_dist(&distances, &mut node_set);
+            
+            let neighbours = self.neighbours(node_id);
+            
+            for neighbour in neighbours {
+                if !node_set.contains(&neighbour) {
+                    continue;
+                }
+                
+                let alt = distances[node_id].add(self.distance(node_id, neighbour));
+                
+                if alt.less_than(&distances[neighbour]) {
+                    distances[neighbour] = alt;
+                }
+            }
+        }
+
+        return distances[end_node_id].clone();
+    }
+    
+    pub fn neighbours(&self, node_id: usize) -> Vec<usize> {
         todo!()
+    }
+    
+    pub fn distance(&self, from_node_id: usize, to_node_id: usize) -> &Distance {
+        return self.edges[from_node_id][to_node_id];
     }
 
     pub fn add_node(&mut self, tag: char, coord: Coord, direction: Vector) -> usize {
@@ -136,7 +171,11 @@ impl WeightedGraph {
     }
 }
 
-pub struct Node {
+fn pop_node_with_min_dist(distances: &Vec<Distance>, node_set: &mut HashSet<usize>) -> usize {
+    todo!()
+}
+
+struct Node {
     pub id: usize,
     pub tag: char,
     pub coord: Coord,
@@ -146,6 +185,39 @@ pub struct Node {
 impl Node {
     pub fn new(id: usize, tag: char, coord: Coord, direction: Vector) -> Node {
         return Node { id, tag, coord, direction };
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+struct Distance(Option<u32>);
+
+impl Distance {
+    pub fn new(option: Option<u32>) -> Distance {
+        Distance { 0: option }
+    }
+    
+    pub fn add(&self, distance: &Distance) -> Distance {
+        return match self.0 {
+            Some(lhs) => match distance.0 {
+                Some(rhs) => Distance::new(Some(lhs + rhs)),
+                None => Distance::new(None),
+            },
+            None => Distance::new(None),
+        };
+    }
+    
+    pub fn less_than(&self, distance: &Distance) -> bool {
+        return match self.0 {
+            Some(lhs) => match distance.0 {
+                Some(rhs) => lhs < rhs,
+                None => true,
+            },
+            None => false,
+        }
+    }
+    
+    pub fn value(&self) -> u32 {
+        return self.0.unwrap();
     }
 }
 
@@ -163,7 +235,7 @@ fn score(board: &Board) -> u32 {
     let graph = convert_board_to_graph(board);
     let start = graph.find_node_by_tag('S').unwrap();
     let end = graph.find_node_by_tag('E').unwrap();
-    let result = graph.shortest_path_cost(start, end).unwrap();
+    let result = graph.shortest_path_cost(start, end).value();
     return result;
 }
 
@@ -203,6 +275,55 @@ mod tests {
         let board = Board::from(&input);
         let actual = score(&board);
         assert_eq!(actual, 1001);
+    }
+
+    #[test]
+    fn test_distance_inf_less_than_inf() {
+        let dist1 = Distance::new(None);
+        let dist2 = Distance::new(None);
+        assert_eq!(dist1.less_than(&dist2), false);
+    }
+
+    #[test]
+    fn test_distance_some_less_than_inf() {
+        let dist1 = Distance::new(Some(42));
+        let dist2 = Distance::new(None);
+        assert_eq!(dist1.less_than(&dist2), true);
+    }
+
+    #[test]
+    fn test_distance_inf_less_than_some() {
+        let dist1 = Distance::new(None);
+        let dist2 = Distance::new(Some(42));
+        assert_eq!(dist1.less_than(&dist2), false);
+    }
+
+    #[test]
+    fn test_distance_some_less_than_some_true() {
+        let dist1 = Distance::new(Some(41));
+        let dist2 = Distance::new(Some(42));
+        assert_eq!(dist1.less_than(&dist2), true);
+    }
+
+    #[test]
+    fn test_distance_some_less_than_some_false() {
+        let dist1 = Distance::new(Some(43));
+        let dist2 = Distance::new(Some(42));
+        assert_eq!(dist1.less_than(&dist2), false);
+    }
+
+    #[test]
+    fn test_distance_add() {
+        let dist1 = Distance::new(Some(43));
+        let dist2 = Distance::new(Some(42));
+        assert_eq!(dist1.add(&dist2), Distance::new(Some(85)));
+    }
+
+    #[test]
+    fn test_distance_inf() {
+        let dist1 = Distance::new(Some(43));
+        let dist2 = Distance::new(None);
+        assert_eq!(dist1.add(&dist2), Distance::new(None));
     }
 
     #[test]
