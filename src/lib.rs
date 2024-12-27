@@ -99,16 +99,6 @@ impl Searchable for Board {
     }
 }
 
-impl Coord {
-    pub fn new(x: i32, y: i32) -> Coord {
-        return Coord { x, y };
-    }
-
-    pub fn add(&self, vector: &Vector) -> Coord {
-        return Coord { x: self.x + vector.x, y: self.y + vector.y };
-    }
-}
-
 impl std::fmt::Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in &self.cells {
@@ -117,8 +107,22 @@ impl std::fmt::Display for Board {
             }
             writeln!(f)?;
         }
-        
+
         return Ok(());
+    }
+}
+
+impl Coord {
+    pub fn new(x: i32, y: i32) -> Coord {
+        return Coord { x, y };
+    }
+
+    pub fn add(&self, vector: &Vector) -> Coord {
+        return Coord { x: self.x + vector.x, y: self.y + vector.y };
+    }
+    
+    pub fn subtract(&self, other: &Coord) -> Vector {
+        return Vector { x: self.x - other.x, y: self.y - other.y };
     }
 }
 
